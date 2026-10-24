@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>总经理团队 · 独立版</title>
+<style>
+  :root{--bg:#0f1420;--panel:#171e2e;--card:#1d2740;--line:#2a3654;--text:#e8edf7;--muted:#8fa0c2;--acc:#4f8cff;--ok:#2fbf71;--warn:#f0a020;--bad:#e5484d}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Microsoft YaHei",system-ui,sans-serif;padding:24px;max-width:1080px;margin:0 auto}
+  h1{font-size:22px}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.6}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:16px}
+  textarea{width:100%;min-height:90px;background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:10px;font-size:14px;resize:vertical;font-family:inherit}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;align-items:flex-end}
+  input{background:var(--card);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:8px 10px;font-size:13px}
+  input[type=number]{width:70px}
+  input[type=checkbox]{width:auto}
+  label.f{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+  label.f input{width:230px}
+  button.primary{background:var(--acc);border:none;color:#fff;padding:10px 24px;border-radius:8px;font-size:15px;cursor:pointer}
+  button.primary:disabled{opacity:.5;cursor:not-allowed}
+  details{margin-bottom:10px}
+  summary{cursor:pointer;color:var(--muted);font-size:13px}
+  .pills{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{padding:5px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .pill.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+  .pill.done{background:rgba(47,191,113,.15);color:var(--ok);border-color:rgba(47,191,113,.4)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-top:12px}
+  .wcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .wtop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .wrole{font-weight:600;font-size:14px}
+  .chip{font-size:11px;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .chip.执行中{background:rgba(79,140,255,.18);color:#7ea8ff}
+  .chip.待审核{background:rgba(240,160,32,.15);color:var(--warn)}
+  .chip.返工中{background:rgba(229,72,77,.15);color:var(--bad)}
+  .chip.已通过{background:rgba(47,191,113,.15);color:var(--ok)}
+  .chip.未达标{background:rgba(229,72,77,.25);color:#ff8a8e}
+  .wobj{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+  .wtext{font-size:12px;margin-top:6px;line-height:1.6;color:#c6d3ee}
+  .wfb{font-size:12px;margin-top:6px;line-height:1.6;color:var(--warn)}
+  .wfile{font-size:11px;color:#6f83ab;margin-top:6px;word-break:break-all}
+  #log{background:#0b0f1a;border:1px solid var(--line);border-radius:8px;padding:10px;height:170px;overflow:auto;font-family:Consolas,monospace;font-size:12px;color:#9fb3d9;margin-top:12px;white-space:pre-wrap}
+  #report{margin-top:10px;line-height:1.9;font-size:14px}
+  #report h2{margin:16px 0 8px;font-size:16px}#report h3{margin:12px 0 6px;font-size:14px}#report li{margin-left:22px}
+  .arch{font-size:13px;color:var(--muted);line-height:1.8;margin-top:12px;background:var(--card);border-radius:8px;padding:10px}
+  .err{color:var(--bad);font-size:13px}
+  .hide{display:none}
+  .path{font-size:12px;color:var(--muted);word-break:break-all;margin:6px 0}
+  .issues{font-size:12px;color:var(--warn);margin:6px 0}
+</style>
+</head>
+<body>
+<h1>总经理团队 <span style="color:var(--acc)">· 独立版</span></h1>
+<div class="sub">你当老板,AI 总经理带队干活:拆解分工 → 员工并行 → 总经理审核返工 → 独立审读把关 → 交付报告。所有数据只在你自己的电脑上处理。</div>
+
+<div class="panel">
+  <details>
+    <summary>⚙ 设置(API Key 只保存在你电脑的浏览器里,不会上传)</summary>
+    <div class="row">
+      <label class="f">API 地址(OpenAI 兼容,填平台文档给的 Base URL)<input id="base" placeholder="例如 https://api.deepseek.com"></label>
+      <label class="f">API Key<input id="key" type="password" placeholder="sk-..."></label>
+      <label class="f">模型名<input id="model" placeholder="例如 deepseek-chat"></label>
+    </div>
+    <div class="row">
+      <label class="f">最多员工数<input id="mw" type="number" min="1" max="6" value="3"></label>
+      <label class="f">返工轮数上限<input id="mr" type="number" min="1" max="5" value="2"></label>
+      <label class="f" style="flex-direction:row;align-items:center;gap:6px;padding-bottom:6px"><input id="mock" type="checkbox" checked> 演示模式(不需要 Key)</label>
+    </div>
+  </details>
+  <textarea id="task" placeholder="把任务交给总经理,例如:帮我做一份社区奶茶店的开业方案,包括选址分析、产品定价和开业活动策划"></textarea>
+  <div class="row">
+    <button class="primary" id="go">🚀 下达任务</button>
+    <span id="errmsg" class="err"></span>
+  </div>
+</div>
+
+<div class="panel hide" id="runPanel">
+  <div class="pills" id="pills"></div>
+  <div class="arch hide" id="arch"></div>
+  <div class="grid" id="workers"></div>
+  <div id="log"></div>
+  <div class="panel hide" id="reportPanel" style="background:var(--card)">
+    <h2 style="font-size:16px">📄 总经理交付报告</h2>
+    <div class="path" id="reportPath"></div>
+    <div class="issues hide" id="reportIssues"></div>
+    <div id="report"></div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const PHASES = [["plan","拆解分工"],["work","员工执行"],["review","总经理审核"],["rework","返工"],["audit","独立审读"],["report","汇总交付"],["done","完成"]];
+const LABELS = Object.fromEntries(PHASES);
+let runId = null, since = 0, timer = null;
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function bold(s){ return s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>'); }
+function md(src){
+  const lines = esc(src).split(/\r?\n/); const out = []; let inCode = false, inList = false;
+  const closeList = () => { if (inList) { out.push('</ul>'); inList = false; } };
+  for (let l of lines){
+    if (/^```/.test(l)) { closeList(); inCode = !inCode; out.push(inCode ? '<pre style="background:#0b0f1a;padding:8px;border-radius:6px;overflow:auto">' : '</pre>'); continue; }
+    if (inCode) { out.push(l); continue; }
+    l = bold(l);
+    if (/^###\s/.test(l)) { closeList(); out.push('<h3>' + l.slice(4) + '</h3>'); }
+    else if (/^##\s/.test(l)) { closeList(); out.push('<h2>' + l.slice(3) + '</h2>'); }
+    else if (/^#\s/.test(l)) { closeList(); out.push('<h2>' + l.slice(2) + '</h2>'); }
+    else if (/^[-*]\s/.test(l)) { if (!inList) { out.push('<ul>'); inList = true; } out.push('<li>' + l.slice(2) + '</li>'); }
+    else { closeList(); if (l.trim()) out.push('<p>' + l + '</p>'); }
+  }
+  closeList();
+  return out.join('\n');
+}
+function loadCfg(){
+  $('base').value = localStorage.getItem('gmt_base') || '';
+  $('key').value = localStorage.getItem('gmt_key') || '';
+  $('model').value = localStorage.getItem('gmt_model') || '';
+  $('mw').value = localStorage.getItem('gmt_mw') || '3';
+  $('mr').value = localStorage.getItem('gmt_mr') || '2';
+}
+function saveCfg(){
+  localStorage.setItem('gmt_base', $('base').value.trim());
+  localStorage.setItem('gmt_key', $('key').value.trim());
+  localStorage.setItem('gmt_model', $('model').value.trim());
+  localStorage.setItem('gmt_mw', $('mw').value);
+  localStorage.setItem('gmt_mr', $('mr').value);
+}
+function logIt(msg){
+  const el = $('log');
+  el.textContent += '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function renderPills(cur){
+  const idx = PHASES.findIndex((p) => p[0] === cur);
+  $('pills').innerHTML = PHASES.map((p, i) =>
+    '<span class="pill ' + (i < idx ? 'done' : '') + (p[0] === cur ? ' active' : '') + '">' + p[1] + '</span>'
+  ).join('');
+}
+function wcard(no, role, obj){
+  return '<div class="wcard" id="w' + no + '"><div class="wtop"><span class="wrole">' + no + '. ' + esc(role) +
+    '</span><span class="chip 执行中">执行中</span></div><div class="wobj">' + esc(obj) +
+    '</div><div class="wtext"></div><div class="wfb"></div><div class="wfile"></div></div>';
+}
+function updateWorker(x){
+  const c = document.getElementById('w' + x.no);
+  if (!c) return;
+  const chip = c.querySelector('.chip');
+  if (x.status) { chip.className = 'chip ' + x.status; chip.textContent = x.status; }
+  if (x.summary) c.querySelector('.wtext').textContent = x.summary;
+  if (x.feedback) c.querySelector('.wfb').textContent = '审核意见:' + x.feedback;
+}
+async function startRun(){
+  const task = $('task').value.trim();
+  if (!task) { $('errmsg').textContent = '请先输入任务'; return; }
+  const mock = $('mock').checked;
+  if (!mock && (!$('base').value.trim() || !$('key').value.trim() || !$('model').value.trim())) {
+    $('errmsg').textContent = '真实运行需要填写 API 地址、Key 和模型名;或勾选演示模式';
+    return;
+  }
+  saveCfg();
+  $('errmsg').textContent = '';
+  try {
+    const res = await fetch('/api/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task, mock, baseURL: $('base').value.trim(), apiKey: $('key').value.trim(), model: $('model').value.trim(), maxWorkers: +$('mw').value || 3, maxRounds: +$('mr').value || 2 }),
+    });
+    const data = await res.json();
+    if (!res.ok) { $('errmsg').textContent = data.error || '启动失败'; return; }
+    runId = data.runId; since = 0;
+    $('runPanel').classList.remove('hide');
+    $('reportPanel').classList.add('hide');
+    $('arch').classList.add('hide');
+    $('workers').innerHTML = '';
+    $('log').textContent = '';
+    renderPills('plan');
+    $('go').disabled = true; $('go').textContent = '团队开工中…';
+    timer = setInterval(poll, 1200);
+  } catch (e) { $('errmsg').textContent = '无法连接本地服务:' + e.message; }
+}
+async function poll(){
+  try {
+    const res = await fetch('/api/events?runId=' + runId + '&since=' + since);
+    if (!res.ok) return;
+    const d = await res.json();
+    for (const ev of d.events) handle(ev);
+    since = d.next;
+    if (d.status !== 'running') {
+      clearInterval(timer);
+      $('go').disabled = false; $('go').textContent = '🚀 再来一个任务';
+      renderPills('done');
+      if (d.status === 'error') logIt('❌ 任务失败:' + (d.error || '未知错误'));
+    }
+  } catch (e) { /* 下次轮询重试 */ }
+}
+function handle(ev){
+  const t = ev.type, x = ev.data || {};
+  if (t === 'phase') { if (x.phase !== 'done') { renderPills(x.phase); logIt('—— ' + (LABELS[x.phase] || x.phase)); } }
+  else if (t === 'plan') {
+    $('arch').classList.remove('hide');
+    $('arch').innerHTML = '<b>总经理的整体架构:</b>' + esc(x.architecture);
+    $('workers').innerHTML = x.packages.map((p) => wcard(p.no, p.role, p.objective)).join('');
+  }
+  else if (t === 'worker') updateWorker(x);
+  else if (t === 'log') logIt(x.msg);
+  else if (t === 'done') {
+    $('reportPath').textContent = '报告已保存到:' + x.reportFile;
+    if (x.openIssues && x.openIssues.length) {
+      $('reportIssues').classList.remove('hide');
+      $('reportIssues').textContent = '⚠ 遗留事项:' + x.openIssues.join(' ; ');
+    }
+    $('report').innerHTML = md(x.markdown || x.conclusion || '');
+    $('reportPanel').classList.remove('hide');
+    logIt('✅ 交付完成');
+  }
+  else if (t === 'error') logIt('❌ ' + x.message);
+}
+loadCfg();
+$('go').onclick = startRun;
+</script>
+</body>
+</html>
